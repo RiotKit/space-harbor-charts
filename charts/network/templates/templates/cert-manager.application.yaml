@@ -1,0 +1,85 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: "rkt.cert-manager"
+    namespace: {{ .Values.argocd.namespace }}
+spec:
+    project: default
+    source:
+        chart: cert-manager
+        repoURL: https://charts.jetstack.io
+        targetRevision: {{ .Values.certManager.version }}
+        helm:
+            values: |
+                installCRDs: true
+                prometheus:
+                    enabled: false
+                cainjector:
+                    enabled: true
+                    tolerations:
+                        - key: "only-on-infra"
+                          operator: "Exists"
+                          effect: "NoSchedule"
+                        - key: "only-on-primary"
+                          operator: "Exists"
+                          effect: "NoSchedule"
+                    resources:
+                        requests:
+                            memory: 35Mi
+                            cpu: 0
+                        limits:
+                            memory: 64Mi
+                            cpu: 0.1
+                startupapicheck:
+                    enabled: false
+                resources:
+                    requests:
+                        memory: 16Mi
+                        cpu: 0
+                    limits:
+                        memory: 64Mi
+                        cpu: 0.1
+                nodeSelector:
+                    node-type: primary
+                tolerations:
+                    - key: "only-on-primary"
+                      operator: "Exists"
+                      effect: "NoSchedule"
+                    - key: "node-role.kubernetes.io/master"
+                      operator: "Exists"
+                      effect: "NoSchedule"
+                webhook:
+                    livenessProbe:
+                        periodSeconds: 600
+                    readinessProbe:
+                        periodSeconds: 300
+                    tolerations:
+                        - key: "only-on-primary"
+                          operator: "Exists"
+                          effect: "NoSchedule"
+                        - key: "node-role.kubernetes.io/master"
+                          operator: "Exists"
+                          effect: "NoSchedule"
+                    resources:
+                        requests:
+                            memory: 16Mi
+                            cpu: 0
+                        limits:
+                            memory: 64Mi
+                            cpu: 0.1
+                    timeoutSeconds: 20
+                ingressShim:
+                    defaultIssuerName: letsencrypt-staging
+                    defaultIssuerKind: ClusterIssuer
+                    defaultIssuerGroup: cert-manager.io
+
+    destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: {{ .Values.certManager.namespace }}
+    syncPolicy:
+        automated:
+            prune: true
+        syncOptions:
+            - CreateNamespace=true
+            - FailOnSharedResource=true

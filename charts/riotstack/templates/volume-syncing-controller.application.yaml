@@ -1,0 +1,41 @@
+{{ if .Values.volume-syncing-controller.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: "rkt.volume-syncing-controller"
+    namespace: {{ .Values.argocd.namespace }}
+    labels:
+        app.kubernetes.io/org: "riotkit-org"
+spec:
+    project: default
+    source:
+        chart: volume-syncing-controller
+        repoURL: https://riotkit-org.github.io/helm-of-revolution/
+        targetRevision: {{ .Values.volume-syncing-controller.version }}
+        helm:
+            values: |
+                webhook:
+                    onlyLabelledNamespaces: false
+                    reinvocationPolicy: IfNeeded
+                tolerations:
+                    - key: "node-role.kubernetes.io/master"
+                      operator: "Exists"
+                      effect: "NoSchedule"
+                resources:
+                    requests:
+                        memory: 12Mi
+                        cpu: 0
+                    limits:
+                        memory: 64Mi
+                        cpu: 0.1
+    destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: {{ .Values.volume-syncing-controller.namespace }}
+    syncPolicy:
+        automated:
+            prune: true
+        syncOptions:
+            - FailOnSharedResource=true
+            - CreateNamespace=true
+{{ end }}

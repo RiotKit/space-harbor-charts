@@ -1,0 +1,22 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: rkt.meta
+    namespace: {{ .Values.argocd.namespace }}
+spec:
+    project: default
+    source:
+        repoURL: {{ .Values.repo.url }}
+        targetRevision: HEAD
+        path: src/meta
+        directory:
+            recurse: true
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: default
+    syncPolicy:
+        automated:
+            prune: true
+        syncOptions:
+            - FailOnSharedResource=true

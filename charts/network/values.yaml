@@ -1,0 +1,21 @@
+argocd:
+    namespace: argocd
+
+certManager:
+    namespace: cert-manager
+    version: 1.8.0
+
+nginx:
+    namespace: nginx
+    version: 4.5.2
+    replicas: 1
+    onlyOnPrimary: false
+    enableModSecurity: false
+    enableMetrics: false
+    resources:
+        limits:
+            cpu: '0.5'
+            memory: 350Mi
+        requests:
+            cpu: '0.1'
+            memory: 128Mi

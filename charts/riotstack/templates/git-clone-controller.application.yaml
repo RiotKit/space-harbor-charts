@@ -1,0 +1,62 @@
+{{ if .Values.git-clone-controller.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: "rkt.git-clone-controller"
+    namespace: {{ .Values.argocd.namespace }}
+    labels:
+        app.kubernetes.io/org: "riotkit-org"
+spec:
+    project: default
+    source:
+        chart: git-clone-controller
+        repoURL: ghcr.io/riotkit-org/charts
+        targetRevision: {{ .Values.git-clone-controller.version }}
+        helm:
+            values: |
+                tolerations:
+                    - key: "node-role.kubernetes.io/master"
+                      operator: "Exists"
+                      effect: "NoSchedule"
+                resources:
+                    requests:
+                        memory: 8Mi
+                        cpu: 0
+                    limits:
+                        memory: 128Mi
+                        cpu: 0.1
+                health:
+                    liveness:
+                        enabled: true
+                        attributes:
+                            failureThreshold: 1
+                            terminationGracePeriodSeconds: 10
+                            periodSeconds: 180
+                            timeoutSeconds: 5
+                            failureThreshold: 2
+                    readiness:
+                        enabled: true
+                        attributes:
+                            periodSeconds: 120
+                            timeoutSeconds: 5
+                            failureThreshold: 2                
+    ignoreDifferences:
+        - kind: Secret
+          jsonPointers:
+              - /data/tls.crt
+              - /data/tls.key
+        - group: "apps"
+          kind: "Deployment"
+          jsonPointers:
+              - /spec/template/spec/containers[0]/livenessProbe/terminationGracePeriodSeconds
+    destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: {{ .Values.git-clone-controller.namespace }}
+    syncPolicy:
+        automated:
+            prune: true
+        syncOptions:
+            - FailOnSharedResource=true
+            - CreateNamespace=true
+{{ end }}

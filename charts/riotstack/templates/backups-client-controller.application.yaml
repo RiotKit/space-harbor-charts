@@ -1,0 +1,35 @@
+{{ if .Values.backups.enabled }}
+# -----------------------------------------------------------------------
+# Backups Controller to automate backup configuration for local services
+# -----------------------------------------------------------------------
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: "rkt.backups-client-controller"
+    namespace: {{ .Values.argocd.namespace }}
+    labels:
+        app.kubernetes.io/org: "riotkit-org"
+spec:
+    project: default
+    source:
+        chart: backup-maker-controller
+        repoURL: ghcr.io/riotkit-org/charts
+        targetRevision: {{ .Values.backups.version }}
+        helm:
+            releaseName: bmc
+            values: |
+                tolerations:
+                    - key: "node-role.kubernetes.io/master"
+                      operator: "Exists"
+                      effect: "NoSchedule"
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ .Values.backups.namespace }}
+    syncPolicy:
+        automated:
+            prune: true
+        syncOptions:
+            - FailOnSharedResource=true
+            - CreateNamespace=true
+{{ end }}

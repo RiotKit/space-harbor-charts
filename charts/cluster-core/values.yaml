@@ -1,0 +1,10 @@
+argocd:
+    namespace: argocd
+
+repo:
+    url: https://.../cluster-root.git
+
+namespaces:
+    version: 1.0.0
+    namespaces:
+        - name: backups

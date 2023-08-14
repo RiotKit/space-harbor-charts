@@ -1,0 +1,27 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: rkt.namespaces
+    namespace: {{ .Values.argocd.namespace }}
+    annotations:
+        argocd.argoproj.io/sync-options: Prune=false
+spec:
+    project: default
+    source:
+        chart: namespaces
+        repoURL: ghcr.io/riotkit-org/charts
+        targetRevision: {{ .Values.namespaces.version }}
+        helm:
+            # language=yaml
+            values: |
+                namespaces:
+                    {{ toYaml .Values.namespaces.namespaces }}
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: default
+    syncPolicy:
+        automated:
+        syncOptions:
+            - FailOnSharedResource=true
+            - PrunePropagationPolicy=orphan

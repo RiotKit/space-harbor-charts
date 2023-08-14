@@ -1,0 +1,17 @@
+argocd:
+    namespace: argocd
+
+git-clone-controller:
+    enabled: true
+    namespace: gcc
+    version: v1.2-rc2
+
+backups:
+    enabled: true
+    namespace: backups
+    version: 0.0-latest-main
+
+volume-syncing-controller:
+    enabled: true
+    namespace: vsc
+    version: v1.0.1-rc1
